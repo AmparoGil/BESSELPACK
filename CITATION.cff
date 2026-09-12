@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "BESSELPACK: MATLAB package for the computation of Bessel functions and their zeros"
+message: "If you use BESSELPACK in your research, please cite this software."
+type: software
+authors:
+  - family-names: "Gil"
+    given-names: "Amparo"
+    orcid: ""
+  - family-names: "Segura"
+    given-names: "Javier"
+    orcid: ""
+  - family-names: "Temme"
+    given-names: "Nico M."
+    orcid: ""
+version: "1.0.0"
+date-released: "2026-09-12"
+license: "BSD-3-Clause"
+repository-code: "https://github.com/AmparoGil/BESSELPACK"
