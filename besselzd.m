@@ -1,4 +1,4 @@
-function [xzer, xzbad] = besselzd(a, b, pnu, gamm, alpha, eps)
+function [xzer, xzbad, nit] = besselzd(a, b, pnu, gamm, alpha, eps)
 %---------------------------------------------------------------------
 % Computation of the zeros of the equation
 %
@@ -26,6 +26,7 @@ function [xzer, xzbad] = besselzd(a, b, pnu, gamm, alpha, eps)
 %           x C'_{nu,alpha}(x) + gamm C_{nu,alpha}(x) = 0 in (a,b)
 %           for which the required accuracy is not achieved (typically in
 %           the case of nearly degenerate roots)
+%   nit     (optional) number of iterations used for each zero in xzer
 %-------------------------------------------------------------------------
 % Accompanying software of the paper 
 % "Numerical Software for Bessel functions and Associated
@@ -54,13 +55,6 @@ for i=1:co
   end
   numt=numt+num;
 end
-if abs(pnu)>abs(gamm)  
-  nuga=sqrt(pnu2-gamm2);
-  if a < nuga      
-    xt1=nuga*(1+2e-16); 
-    xt2=nuga*(1-2e-16);    
- end
-end
 com=0;
 i=0;
 while i<numt
@@ -82,7 +76,9 @@ xcert=xcert(1:numt);
 itct=itct(1:numt);
 xzbad=xzbad(1:com);
 itbad=itbad(1:com);
-xzer=sort([xcert xzbad],'ascend');
+[xzer,ind]=sort([xcert xzbad],'ascend');
+nit=[itct itbad];
+nit=nit(ind);
 end
 
 function [co, li, ui, signo]=intervals(ai, bi, nu, g, talpha)
@@ -398,18 +394,39 @@ else
   pnumm=pnu-1;
 end
 % --- Bessel J, Y ---
-[fj1,fy1,~,~,~]=bessel(pnum,x);
-[fj2,fy2,~,~,~]=bessel(pnumm,x);
+[fj1,fy1,~,~,ier1]=bessel(pnum,x);
+[fj2,fy2,~,~,ier2]=bessel(pnumm,x);
+if (ier1~=0)||(ier2~=0)
+  % underflow of J: limiting form of the ratio
+  if pnu>=1
+    nu=pnu-1;
+    sq=sqrt(max(nu^2-x^2,0));
+    if talpha==0
+      val=x/(nu+sq);
+    else
+      val=(nu+sq)/x;
+    end
+  else
+    nu=-pnu;
+    sq=sqrt(max(nu^2-x^2,0));
+    val=-x/(nu+sq);
+  end
+  return
+end
+% J_{-m}=cos(m pi)J_m-sin(m pi)Y_m, Y_{-m}=sin(m pi)J_m+cos(m pi)Y_m
 if pnu <= 0
-    fj1f=cos(pnum*pi)*fj1-sin(pnum*pi)*fy1;
-    fy1f=sin(pnum*pi)*fj1+cos(pnum*pi)*fy1;
-    fj2f=cos(pnumm*pi)*fj2-sin(pnumm*pi)*fy2;
-    fy2f=sin(pnumm*pi)*fj2+cos(pnumm*pi)*fy2;
+    [s1,c1]=sincospi(pnum);
+    [s2,c2]=sincospi(pnumm);
+    fj1f=c1*fj1-s1*fy1;
+    fy1f=s1*fj1+c1*fy1;
+    fj2f=c2*fj2-s2*fy2;
+    fy2f=s2*fj2+c2*fy2;
 elseif pnu < 1
+    [s2,c2]=sincospi(pnumm);
     fj1f=fj1;
     fy1f=fy1;
-    fj2f=cos(pnum*pi)*fj2 - sin(pnum*pi)*fy2;
-    fy2f=sin(pnum*pi)*fj2 + cos(pnum*pi)*fy2;
+    fj2f=c2*fj2-s2*fy2;
+    fy2f=s2*fj2+c2*fy2;
 else
     fj1f=fj1;
     fy1f=fy1;
@@ -426,5 +443,20 @@ val=(c*fj1f-talphai*fy1f)/ ...
     (c*fj2f-talphai*fy2f);
 end
 
-
-
+function [s,c]=sincospi(a)
+% sin(pi*a), cos(pi*a) with exact reduction a=n/2+r, |r|<=1/4
+n=round(2*a);
+r=a-n/2;
+sr=sin(pi*r);
+cr=cos(pi*r);
+m=mod(n,4);
+if m==0
+  s=sr; c=cr;
+elseif m==1
+  s=cr; c=-sr;
+elseif m==2
+  s=-sr; c=-cr;
+else
+  s=-cr; c=sr;
+end
+end

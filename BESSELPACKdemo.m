@@ -29,7 +29,7 @@ fprintf('error flag = %d\n\n',iflag);
 %
 % C_{nu,alpha}(x)=cos(alpha)J_nu(x)-sin(alpha)Y_nu(x)
 %-----------------------------------------------------
-nu = 0.5;
+nu = 2.5;
 alpha = pi/3;
 a = 0.1;
 b = 50;
@@ -49,6 +49,7 @@ figure;
 plot(xx,CC,'LineWidth',1);
 hold on
 plot(z,zeros(size(z)),'o');
+ylim([-0.5 0.5]);   % C is large near x=a
 grid on
 xlabel('x');
 ylabel('C_{\nu,\alpha}(x)');
@@ -64,9 +65,11 @@ gamma = 0.5;
 a = 0.1;
 b = 50;
 tol = 1e-12;
-[z] = besselzd(a,b,nu,gamma,alpha,tol);
-fprintf('\nExample 3: derivative-related zeros\n');
+[z,zbad] = besselzd(a,b,nu,gamma,alpha,tol);
+fprintf('\nExample 3: zeros of x C''(x) + gamma C(x)\n');
+fprintf('nu = %g, alpha = %g, gamma = %g\n',nu,alpha,gamma);
 disp(z);
+fprintf('zeros with accuracy below the tolerance: %d\n',numel(zbad));
 %-------------------------------------------------
 %% 4. Zeros of cross products of Bessel functions
 %-------------------------------------------------
@@ -76,8 +79,9 @@ icho = 1;      % selected cross product
 a = 0.1;
 b = 50;
 tol = 1e-12;
-[z] = crosspz(icho,nu,lambda,a,b,tol);
+[z,zbad] = crosspz(icho,nu,lambda,a,b,tol);
 fprintf('\nExample 4: cross-product zeros\n');
-fprintf('icho = %d, lambda = %g\n',icho,lambda);
+fprintf('icho = %d, nu = %g, lambda = %g\n',icho,nu,lambda);
 disp(z);
+fprintf('zeros with accuracy below the tolerance: %d\n',numel(zbad));
 fprintf('\nDemonstration completed successfully.\n');

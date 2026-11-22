@@ -1,4 +1,4 @@
-function xzer=besselz(a, b, pnu, alpha, eps)
+function [xzer,nit]=besselz(a, b, pnu, alpha, eps)
 %--------------------------------------------------------------------
 % Computation of the zeros of the general cylinder function
 %
@@ -19,14 +19,16 @@ function xzer=besselz(a, b, pnu, alpha, eps)
 %
 %   xzer    vector containing all zeros of C_{nu,alpha}(x) in (a,b)
 %           computed within the prescribed accuracy
+%   nit     (optional) number of iterations used for each zero
 %-----------------------------------------------------------------------
 % Accompanying software of the paper 
 % "Numerical Software for Bessel functions and Associated
 %  Values" 
 % Authors: Amparo Gil, Javier Segura and Nico M. Temme
 %------------------------------------------------------------------------
+xzer=[];
+itc=[];
 dpi=pi;
-tiny=10*realmin;
 if a>=b
   error('a should be smaller than b');
 end
@@ -75,14 +77,7 @@ while (j*(xc-xm)>0)&&(k>=0)
     if iter > 1000
       error('convergence failure');
     end
-    [J1,Y1,Jp1,Yp1,~]=bessel(pnu,xc);
-    Cnu=calpha*J1-salpha*Y1; 
-    if abs(Cnu)<tiny
-      h=0;
-    else
-      Cnup=calpha*Jp1-salpha*Yp1;
-      h=1/(1/(2*xc)+Cnup/Cnu);
-    end
+    h=hcyl(pnu,calpha,salpha,xc);
     omega=sqrt(omega2);
     atast=atan(omega*h);
     dest=atast/omega;
@@ -117,22 +112,8 @@ while (j*(xc-xm)>0)&&(k>=0)
   end
 end
 if k < 0
-  [J1,Y1,Jp1,Yp1,~]=bessel(pnu,xm);
-  Cnu=calpha*J1-salpha*Y1;
-  if abs(Cnu)<tiny
-    hm=0;
-  else
-    Cnup=calpha*Jp1-salpha*Yp1;
-    hm=1/(1/(2*xm)+Cnup/Cnu);
-  end  
-  [J2,Y2,Jp2,Yp2,~]=bessel(pnu,xc);
-  Cnub=calpha*J2-salpha*Y2;
-  if abs(Cnub)<tiny
-    h=0;
-  else
-    Cnupb=calpha*Jp2-salpha*Yp2;
-    h=1/(1/(2*xc)+Cnupb/Cnub);
-  end  
+  hm=hcyl(pnu,calpha,salpha,xm);
+  h=hcyl(pnu,calpha,salpha,xc);
   if (j*h > 0) && (h*hm < 0)
     iter=0;
     dev=eps+1;
@@ -155,14 +136,7 @@ if k < 0
           isal=1;
         end
         xc=xc-dest;
-        [J1,Y1,Jp1,Yp1,~]=bessel(pnu,xc);
-        Cnu=calpha*J1-salpha*Y1; 
-        if abs(Cnu)<tiny
-          h=0;
-        else
-          Cnup=calpha*Jp1-salpha*Yp1;
-          h=1/(1/(2*xc)+Cnup/Cnu);
-        end
+        h=hcyl(pnu,calpha,salpha,xc);
         omega2=1-(pnuu - 0.25)/xc^2;
         omega=sqrt(-omega2);
       end
@@ -170,9 +144,33 @@ if k < 0
     if dev<eps
       i=i+1;
       xzer(i)=xc;
+      itc(i)=iter;
     end
   end
 end
 if j==1
   xzer=xzer(end:-1:1);
+  itc=itc(end:-1:1);
+end
+nit=itc;
+
+function h=hcyl(pnu,calpha,salpha,x)
+% h=y/y', y=sqrt(x)*C_{nu,alpha}(x)
+[J,Y,Jp,Yp,ier]=bessel(pnu,x);
+if (ier~=0)&&(abs(pnu)>0.5)
+  % J_|nu|(x) underflows: limiting form of C'/C
+  sq=sqrt(max(pnu^2-x^2,0));
+  if (pnu>0)&&(salpha==0)
+    h=x/(0.5+sq);
+  else
+    h=x/(0.5-sq);
+  end
+else
+  Cnu=calpha*J-salpha*Y;
+  if abs(Cnu)<10*realmin
+    h=0;
+  else
+    Cnup=calpha*Jp-salpha*Yp;
+    h=1/(1/(2*x)+Cnup/Cnu);
+  end
 end

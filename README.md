@@ -34,6 +34,17 @@ $$
 
 The implementation combines different numerical methods depending on the parameter region in order to provide accurate and efficient results over a wide range of orders and arguments.
 
+```matlab
+[J,Y,Jp,Yp,ier] = bessel(nu,x);
+```
+
+| Input | Description |
+| ----- | ----------- |
+| `nu`  | Order $\nu$ (real) |
+| `x`   | Argument $x>0$ |
+
+The error flag is `ier=0` for a successful computation, `ier=1` in case of underflow/overflow and `ier=2` if $x\le 0$. When `ier=1` and $\nu>0$, `J=Jp=0`, `Y=-realmax` and `Yp=realmax`.
+
 ---
 
 ## 2. Zeros of general cylinder functions
@@ -53,7 +64,11 @@ $$
 
 The zeros can be computed in a prescribed interval $(a,b)$, for given order $\nu$, parameter $\alpha$, and requested accuracy.
 
-The routine returns a vector containing the computed zeros.
+```matlab
+xzer = besselz(a,b,nu,alpha,tol);
+```
+
+The routine returns a vector containing the computed zeros in $(a,b)$, $a>0$.
 
 ---
 
@@ -75,7 +90,11 @@ $$
 
 The routine is designed to provide reliable results also in parameter regions where zeros may become very close or nearly degenerate.
 
-In addition to the computed zeros, information is provided for zeros for which the requested accuracy could not be achieved. This allows potentially problematic cases, such as nearly multiple zeros, to be identified.
+```matlab
+[xzer,xzbad] = besselzd(a,b,nu,gamma,alpha,tol);
+```
+
+In addition to the computed zeros `xzer`, the zeros for which the requested accuracy could not be achieved are returned in `xzbad` (they are also included in `xzer`). This allows potentially problematic cases, such as nearly multiple zeros, to be identified.
 
 ---
 
@@ -115,25 +134,26 @@ The cross product to be considered is selected by the input parameter `icho`.
 A typical call has the form
 
 ```matlab
-[xzer] = crosspz(icho,nu,lambda,a,b,eps);
+[xzer,xzbad] = crosspz(icho,nu,lambda,a,b,tol);
 ```
 
 where:
 
 | Input    | Description                              |
 | -------- | ---------------------------------------- |
-| `icho`   | Selects the cross product to be computed |
+| `icho`   | Selects the cross product: 1 (A), 2 (B) or 3 (C) |
 | `nu`     | Bessel function order $\nu$              |
 | `lambda` | Parameter $\lambda>0, \lambda \neq 1$    |
 | `a`      | Lower endpoint of the interval           |
 | `b`      | Upper endpoint of the interval           |
-| `eps`    | Requested relative accuracy              |
+| `tol`    | Requested relative accuracy (the routine uses `max(tol,10*eps/(1-lambda))`, with `lambda` replaced by `1/lambda` if `lambda>1`) |
 
 The output is:
 
 | Output | Description                          |
 | ------ | ------------------------------------ |
-| `xzer` | Vector containing the computed zeros |
+| `xzer`  | Vector containing the computed zeros |
+| `xzbad` | Zeros (also in `xzer`) for which the requested accuracy was not reached |
 
 ---
 
@@ -161,14 +181,13 @@ contains examples illustrating the use of the main routines and their applicatio
 
 ## 7. Requirements
 
-* MATLAB
-* No additional MATLAB toolboxes are required beyond the functionality used by the package.
+* MATLAB (tested with R2024b). No additional toolboxes are required.
 
 ---
 
 ## 8. Package structure
 
-The main components of BESSELPACK are:
+The package contains the following files:
 
 ```text
 BESSELPACK/
@@ -177,7 +196,9 @@ BESSELPACK/
 ├── besselzd.m
 ├── crosspz.m
 ├── BESSELPACKdemo.m
-└── ...
+├── README.md
+├── CITATION.cff
+└── LICENSE
 ```
 
 ---
@@ -188,7 +209,7 @@ If you use BESSELPACK in academic work, please cite:
 
 > *Numerical Software for Bessel Functions and Associated Values*
 > Amparo Gil, Javier Segura, and Nico M. Temme
-> Submitted
+> Submitted to Computer Physics Communications
 
 A BibTeX entry will be provided with the final release.
 
